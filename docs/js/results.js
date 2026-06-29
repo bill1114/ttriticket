@@ -89,6 +89,7 @@
     window.location.href = 'index.html';
   });
 
+  TtriApi.warmup();
   document.getElementById('btn-refresh').addEventListener('click', loadResults);
   loadResults();
 })();

@@ -122,8 +122,17 @@
         throw new Error(result.error || '投票失敗');
       }
 
+      // 直接更新本地狀態，不重新打 API
+      stats.hasVoted = true;
+      stats.totalVotes = (stats.totalVotes || 0) + 1;
+      const id = Number(candidateId);
+      stats.voteCounts[id] = (stats.voteCounts[id] || 0) + 1;
+      const nameKey = candidateName.toUpperCase();
+      stats.voteCountsByName[nameKey] = (stats.voteCountsByName[nameKey] || 0) + 1;
+
+      pageSubtitle.textContent = `職編 ${employeeId}｜目前總票數：${stats.totalVotes}`;
       showAlert(`已成功投票給 ${candidateName}！`, 'success');
-      await loadVotePage();
+      renderCandidates();
     } catch (error) {
       const msg = error.message === '已投票' ? '您已經投過票了。' : ('投票失敗：' + error.message);
       showAlert(msg, 'error');
@@ -182,6 +191,9 @@
   });
 
   document.getElementById('btn-refresh').addEventListener('click', loadVotePage);
+
+  // 預熱 GAS，讓使用者輸入職編期間就完成冷啟動
+  TtriApi.warmup();
 
   if (TtriSession.get()) {
     showVote();
