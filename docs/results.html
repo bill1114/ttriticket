@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>投票結果</title>
+    <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="index.html">投票系統</a>
+            <nav>
+                <a href="index.html">候選人</a>
+                <a href="results.html">投票結果</a>
+                <span id="nav-user" class="nav-user hidden"></span>
+                <button type="button" id="btn-logout" class="btn-link hidden">登出</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <div id="alert-box" class="hidden"></div>
+
+        <section class="page-header">
+            <h1>投票結果</h1>
+            <p class="subtitle" id="total-votes">總票數：0</p>
+        </section>
+
+        <div id="results-container" class="empty-state"><p>載入中…</p></div>
+
+        <div class="page-actions">
+            <button type="button" id="btn-refresh" class="btn btn-secondary">同步最新資料</button>
+            <a href="index.html" class="btn btn-secondary">返回投票</a>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <span>候選人與投票紀錄：Google 試算表 ｜ GitHub Pages 靜態版</span>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/employee-id.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/results.js"></script>
+</body>
+</html>

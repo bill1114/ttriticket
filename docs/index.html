@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>投票系統</title>
+    <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="index.html">投票系統</a>
+            <nav id="main-nav">
+                <a href="index.html">候選人</a>
+                <a href="results.html">投票結果</a>
+                <span id="nav-user" class="nav-user hidden"></span>
+                <button type="button" id="btn-logout" class="btn-link hidden">登出</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <div id="alert-box" class="hidden"></div>
+
+        <section id="login-section" class="login-card">
+            <h1>職編登入</h1>
+            <p class="login-hint">請輸入您的職編後即可投票，同一職編僅能投票一次</p>
+            <label class="form-label" for="EmployeeId">職編 <span class="required-mark">*</span></label>
+            <input class="form-input" id="EmployeeId" placeholder="例如：1524 或 D596" autofocus autocomplete="username" />
+            <button type="button" id="btn-login" class="btn btn-primary login-btn">開始投票</button>
+            <p class="login-hint">不需密碼，投票紀錄會寫入 Google 試算表。</p>
+        </section>
+
+        <section id="vote-section" class="hidden">
+            <section class="page-header">
+                <h1 id="page-title">投票系統</h1>
+                <p class="subtitle" id="page-subtitle"></p>
+            </section>
+            <div id="connection-alert" class="hidden"></div>
+            <div id="candidate-container"></div>
+            <div class="page-actions">
+                <button type="button" id="btn-refresh" class="btn btn-secondary">同步最新資料</button>
+                <a href="results.html" class="btn btn-secondary">查看即時結果</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <span>候選人與投票紀錄：Google 試算表 ｜ GitHub Pages 靜態版</span>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/employee-id.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
