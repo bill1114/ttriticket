@@ -1,0 +1,46 @@
+@model TtriTicket.Services.SheetConnectionResult
+@{
+    ViewData["Title"] = "連線診斷";
+}
+
+<section class="page-header">
+    <h1>Google 試算表連線診斷</h1>
+</section>
+
+@if (Model.Success)
+{
+    <div class="alert alert-success">
+        <strong>串接成功</strong> — 已讀取 @Model.CandidateCount 位候選人
+        @if (Model.CandidateNames.Count > 0)
+        {
+            <span>（@string.Join("、", Model.CandidateNames)）</span>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-error">
+        <strong>串接失敗</strong> — @(Model.ErrorMessage ?? "未知錯誤")
+        @if (!string.IsNullOrWhiteSpace(Model.Hint))
+        {
+            <br />@Model.Hint
+        }
+    </div>
+}
+
+<div class="empty-state">
+    <p><strong>試算表 ID：</strong> @Model.SpreadsheetId</p>
+    <p><strong>工作表 Gid：</strong> @Model.SheetGid</p>
+    @if (Model.HttpStatusCode.HasValue)
+    {
+        <p><strong>HTTP 狀態碼：</strong> @Model.HttpStatusCode</p>
+    }
+    @if (Model.ColumnHeaders.Count > 0)
+    {
+        <p><strong>欄位標題：</strong> @string.Join(" | ", Model.ColumnHeaders)</p>
+    }
+</div>
+
+<div class="page-actions">
+    <a asp-action="Index" class="btn btn-secondary">返回投票頁</a>
+</div>

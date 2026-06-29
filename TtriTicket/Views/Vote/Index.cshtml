@@ -1,0 +1,111 @@
+@model VoteResultViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+@if (Model.IsConnectionSuccess)
+{
+    <div class="alert alert-success">
+        <strong>Google 試算表串接成功</strong> — @Model.ConnectionMessage
+        <br /><small>若照片無法顯示，請至 Google 表單回應頁點「檢視資料夾」，將投稿照片資料夾設為「知道連結的任何人可檢視」。</small>
+    </div>
+}
+else if (Model.IsUsingDemoData)
+{
+    <div class="alert alert-warning">
+        <strong>尚未設定試算表</strong> — 目前顯示示範資料。
+        @Model.ConnectionHint
+    </div>
+}
+else
+{
+    <div class="alert alert-error">
+        <strong>Google 試算表串接失敗</strong> — @Model.ConnectionMessage
+        @if (!string.IsNullOrWhiteSpace(Model.ConnectionHint))
+        {
+            <br />@Model.ConnectionHint
+        }
+        <br /><a asp-action="Diagnostic">查看詳細診斷資訊</a>
+    </div>
+}
+
+<section class="page-header">
+    <h1>@Model.Title</h1>
+    <p class="subtitle">
+        職編 @Model.SignedInEmployeeId｜目前總票數：@Model.TotalVotes
+    </p>
+</section>
+
+@if (Model.Candidates.Count == 0)
+{
+    <div class="empty-state">
+        <p>目前尚無候選人資料。</p>
+        @if (!Model.IsConnectionSuccess && !Model.IsUsingDemoData)
+        {
+            <p>請先排除上方串接錯誤，或確認試算表「姓名/職編」欄位有填寫。</p>
+        }
+    </div>
+}
+else
+{
+    <div class="candidate-grid">
+        @foreach (var candidate in Model.Candidates)
+        {
+            <article class="candidate-card">
+                <div class="candidate-photo">
+                    @if (!string.IsNullOrWhiteSpace(candidate.PhotoUrl))
+                    {
+                        <img src="@candidate.PhotoUrl" alt="@candidate.Name 的照片" loading="lazy"
+                             onerror="this.onerror=null;this.src='/images/photo-unavailable.svg';" />
+                    }
+                    else
+                    {
+                        <div class="photo-placeholder">無照片</div>
+                    }
+                </div>
+                <div class="candidate-body">
+                    <h2>@candidate.Name</h2>
+                    <p class="introduction">@candidate.Introduction</p>
+                    <div class="vote-meta">
+                        <span class="vote-count">@candidate.VoteCount 票</span>
+                    </div>
+                    <form asp-action="Cast" method="post" class="vote-form" data-candidate-name="@candidate.Name">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="candidateId" value="@candidate.Id" />
+                        @if (Model.HasVoted)
+                        {
+                            <button type="button" class="btn btn-disabled" disabled>已投票</button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-primary">投票</button>
+                        }
+                    </form>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+<div class="page-actions">
+    <a asp-action="Index" asp-route-refresh="true" class="btn btn-secondary">同步最新資料</a>
+    <a asp-action="Results" class="btn btn-secondary">查看即時結果</a>
+</div>
+
+@if (Model.Candidates.Count > 0 && !Model.HasVoted)
+{
+    <script>
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (!form.classList.contains('vote-form')) {
+                return;
+            }
+
+            var candidateName = form.getAttribute('data-candidate-name') || '此候選人';
+            var message = '確定要投票給「' + candidateName + '」嗎？\n\n投票後無法更改。';
+            if (!confirm(message)) {
+                event.preventDefault();
+            }
+        });
+    </script>
+}

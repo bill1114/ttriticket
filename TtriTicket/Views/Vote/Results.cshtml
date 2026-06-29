@@ -1,0 +1,59 @@
+@model VoteResultViewModel
+@{
+    ViewData["Title"] = "投票結果";
+}
+
+<section class="page-header">
+    <h1>投票結果</h1>
+    <p class="subtitle">總票數：@Model.TotalVotes</p>
+</section>
+
+@if (Model.Candidates.Count == 0)
+{
+    <div class="empty-state">
+        <p>尚無投票資料。</p>
+    </div>
+}
+else
+{
+    <div class="results-list">
+        @{
+            var maxVotes = Model.Candidates.Max(c => c.VoteCount);
+        }
+        @foreach (var (candidate, index) in Model.Candidates.Select((c, i) => (c, i)))
+        {
+            var percentage = Model.TotalVotes > 0
+                ? (double)candidate.VoteCount / Model.TotalVotes * 100
+                : 0;
+            var barWidth = maxVotes > 0
+                ? (double)candidate.VoteCount / maxVotes * 100
+                : 0;
+
+            <article class="result-item">
+                <div class="result-rank">#@(index + 1)</div>
+                <div class="result-photo">
+                    @if (!string.IsNullOrWhiteSpace(candidate.PhotoUrl))
+                    {
+                        <img src="@candidate.PhotoUrl" alt="@candidate.Name" loading="lazy"
+                             onerror="this.onerror=null;this.src='/images/photo-unavailable.svg';" />
+                    }
+                </div>
+                <div class="result-info">
+                    <div class="result-header">
+                        <h2>@candidate.Name</h2>
+                        <span class="result-votes">@candidate.VoteCount 票 (@percentage.ToString("F1")%)</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: @barWidth.ToString("F1")%"></div>
+                    </div>
+                    <p class="introduction">@candidate.Introduction</p>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+<div class="page-actions">
+    <a asp-action="Results" asp-route-refresh="true" class="btn btn-secondary">同步最新資料</a>
+    <a asp-action="Index" class="btn btn-secondary">返回投票</a>
+</div>

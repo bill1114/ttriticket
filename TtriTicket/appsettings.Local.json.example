@@ -1,0 +1,6 @@
+{
+  "GoogleSheets": {
+    "VotesSheetGid": "你的投票紀錄工作表gid",
+    "VoteAppendWebhookUrl": "https://script.google.com/macros/s/你的部署ID/exec"
+  }
+}

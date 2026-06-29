@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 投票系統</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" asp-controller="Vote" asp-action="Index">投票系統</a>
+            <nav>
+                <a asp-controller="Vote" asp-action="Index">候選人</a>
+                <a asp-controller="Vote" asp-action="Results">投票結果</a>
+                @if (!string.IsNullOrWhiteSpace(Context.Session.GetString("EmployeeId")))
+                {
+                    <span class="nav-user">@Context.Session.GetString("EmployeeName") (@Context.Session.GetString("EmployeeId"))</span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="logout-form">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-link">登出</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login">職編登入</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        @if (TempData["Message"] is string message)
+        {
+            <div class="alert alert-success">@message</div>
+        }
+        @if (TempData["ErrorMessage"] is string error)
+        {
+            <div class="alert alert-error">@error</div>
+        }
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <span>候選人與投票紀錄：Google 試算表</span>
+        </div>
+    </footer>
+</body>
+</html>

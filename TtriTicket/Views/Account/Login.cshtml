@@ -1,0 +1,40 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "職編登入";
+    Layout = "_Layout";
+}
+
+<section class="page-header">
+    <h1>職編登入</h1>
+    <p class="subtitle">請輸入您的職編後即可投票，同一職編僅能投票一次</p>
+</section>
+
+<div class="login-card">
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="alert alert-error">@Model.ErrorMessage</div>
+    }
+
+    <form asp-action="Login" method="post" id="loginForm" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ReturnUrl" />
+
+        <label class="form-label" for="EmployeeId">職編 <span class="required-mark">*</span></label>
+        <input class="form-input" asp-for="EmployeeId" id="EmployeeId" placeholder="例如：1524 或 D596" autofocus autocomplete="username" />
+
+        <button type="submit" class="btn btn-primary login-btn">開始投票</button>
+    </form>
+
+    <p class="login-hint">不需密碼，投票紀錄會寫入 Google 試算表。</p>
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+        var input = document.getElementById('EmployeeId');
+        if (!input.value.trim()) {
+            event.preventDefault();
+            alert('請輸入職編後再開始投票。');
+            input.focus();
+        }
+    });
+</script>
