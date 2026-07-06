@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --bg: #f4f6fb;
     --surface: #ffffff;
     --text: #1f2937;
@@ -235,3 +235,32 @@ nav a:hover { color: var(--primary); }
     .result-rank { text-align: left; }
     .result-header { flex-direction: column; align-items: flex-start; }
 }
+
+/* -- Modal -- */
+.modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+}
+.modal-overlay.hidden { display: none; }
+.modal-box {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 420px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-title { margin: 0 0 1rem; font-size: 1.2rem; color: var(--text); }
+.modal-body { font-size: 1.1rem; font-weight: 600; color: var(--primary); margin: 0 0 .5rem; }
+.modal-hint { font-size: .85rem; color: var(--muted); margin: 0 0 1.5rem; }
+.modal-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+
+/* -- 多選投票 -- */
+.candidate-card.selected {
+    border: 2px solid var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.2);
+}
+.select-counter { text-align: center; font-size: .95rem; color: var(--muted); margin-bottom: .75rem; }
+.btn-submit-votes { display: block; width: 100%; margin-top: 1.5rem; padding: .75rem; font-size: 1rem; }
+.btn-voted-this { background: #d1fae5; color: #047857; border: 1px solid #6ee7b7; cursor: default; }

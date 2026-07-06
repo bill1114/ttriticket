@@ -63,12 +63,16 @@ function doPost(e) {
     var MAX_VOTES = 3;
     var lastRow = sheet.getLastRow();
     if (lastRow >= 2) {
-      var employeeIds = sheet.getRange('B2:B' + lastRow).getDisplayValues();
+      var existingRows = sheet.getRange(2, 1, lastRow - 1, 4).getDisplayValues();
       var voteCount = 0;
-      for (var i = 0; i < employeeIds.length; i++) {
-        var existingId = String(employeeIds[i][0]).trim();
+      for (var i = 0; i < existingRows.length; i++) {
+        var existingId = String(existingRows[i][1]).trim();
         if (employeeIdsEqual(existingId, employeeId)) {
           voteCount++;
+          var existingCandidateId = parseSheetInt_(existingRows[i][2]);
+          if (existingCandidateId === Number(candidateId)) {
+            return respond_({ success: false, error: '不能重複投票給同一位候選人' }, e);
+          }
         }
       }
       if (voteCount >= MAX_VOTES) {
@@ -140,6 +144,7 @@ function getVoteStats_(employeeId) {
     };
   }
 
+  var votedCandidateIds = [];
   var rows = sheet.getRange(2, 1, lastRow - 1, 4).getDisplayValues();
   for (var i = 0; i < rows.length; i++) {
     var rowEmployeeId = normalizeEmployeeId_(rows[i][1]);
@@ -160,6 +165,9 @@ function getVoteStats_(employeeId) {
     }
     if (normalizedEmployeeId && employeeIdsEqual(rowEmployeeId, normalizedEmployeeId)) {
       myVoteCount++;
+      if (candidateId > 0) {
+        votedCandidateIds.push(candidateId);
+      }
     }
   }
 
@@ -167,7 +175,8 @@ function getVoteStats_(employeeId) {
     totalVotes: totalVotes,
     voteCounts: voteCounts,
     voteCountsByName: voteCountsByName,
-    voteCount: myVoteCount
+    voteCount: myVoteCount,
+    votedCandidateIds: votedCandidateIds
   };
 }
 

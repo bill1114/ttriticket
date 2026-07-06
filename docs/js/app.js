@@ -9,9 +9,15 @@
   const pageTitle = document.getElementById('page-title');
   const pageSubtitle = document.getElementById('page-subtitle');
 
+  const confirmModal = document.getElementById('confirm-modal');
+  const modalBodyText = document.getElementById('modal-body-text');
+  const modalConfirm = document.getElementById('modal-confirm');
+  const modalCancel = document.getElementById('modal-cancel');
+
   const MAX_VOTES = 3;
   let candidates = [];
-  let stats = { totalVotes: 0, voteCounts: {}, voteCountsByName: {}, voteCount: 0 };
+  let stats = { totalVotes: 0, voteCounts: {}, voteCountsByName: {}, voteCount: 0, votedCandidateIds: [] };
+  let selectedIds = new Set(); // 當次選取的候選人 id
 
   function showAlert(message, type) {
     alertBox.className = 'alert alert-' + type;
@@ -35,10 +41,20 @@
     return list.sort((a, b) => b.voteCount - a.voteCount);
   }
 
-  function renderCandidates() {
-    const employeeId = TtriSession.get();
-    const hasVoted = (stats.voteCount || 0) >= MAX_VOTES;
+  function updateSelectCounter() {
+    const counter = document.getElementById('select-counter');
+    const submitBtn = document.getElementById('btn-submit-votes');
+    if (!counter || !submitBtn) return;
     const remaining = MAX_VOTES - (stats.voteCount || 0);
+    const canSelect = Math.min(remaining, 3);
+    counter.textContent = `已選 ${selectedIds.size} / ${canSelect} 人（本次最多可選 ${canSelect} 人）`;
+    submitBtn.disabled = selectedIds.size === 0;
+  }
+
+  function renderCandidates() {
+    const hasReachedLimit = (stats.voteCount || 0) >= MAX_VOTES;
+    const remaining = MAX_VOTES - (stats.voteCount || 0);
+    const votedIds = new Set((stats.votedCandidateIds || []).map(Number));
     const sorted = applyVoteCounts([...candidates], stats);
 
     if (!sorted.length) {
@@ -46,30 +62,75 @@
       return;
     }
 
-    candidateContainer.innerHTML = '<div class="candidate-grid">' + sorted.map((candidate) => {
+    const canSelect = Math.min(remaining, 3);
+
+    let html = `<p id="select-counter" class="select-counter"></p><div class="candidate-grid">`;
+
+    sorted.forEach((candidate, index) => {
       const photo = candidate.photoUrl
-        ? `<img src="${escapeHtml(candidate.photoUrl)}" alt="${escapeHtml(candidate.name)}" loading="lazy" onerror="this.onerror=null;this.src='images/photo-unavailable.svg';" />`
+        ? `<img src="${escapeHtml(candidate.photoUrl)}" alt="候選人 ${index + 1}" loading="lazy" onerror="this.onerror=null;this.src='images/photo-unavailable.svg';" />`
         : '<div class="photo-placeholder">無照片</div>';
 
-      const button = hasVoted
-        ? '<button type="button" class="btn btn-disabled" disabled>已達投票上限</button>'
-        : `<button type="button" class="btn btn-primary btn-vote" data-id="${candidate.id}" data-name="${escapeAttr(candidate.name)}">投票（剩餘 ${remaining} 票）</button>`;
+      const alreadyVotedThis = votedIds.has(Number(candidate.id));
+      const isSelected = selectedIds.has(Number(candidate.id));
 
-      return `
-        <article class="candidate-card">
+      let buttonHtml;
+      if (hasReachedLimit) {
+        buttonHtml = '<button type="button" class="btn btn-disabled" disabled>已達投票上限</button>';
+      } else if (alreadyVotedThis) {
+        buttonHtml = '<button type="button" class="btn btn-voted-this" disabled>已投過此人</button>';
+      } else {
+        const selectedClass = isSelected ? ' btn-selected' : '';
+        buttonHtml = `<button type="button" class="btn btn-primary btn-select${selectedClass}" data-id="${candidate.id}">
+          ${isSelected ? '✓ 已選取' : '選取'}
+        </button>`;
+      }
+
+      const selectedClass = isSelected ? ' selected' : '';
+      html += `
+        <article class="candidate-card${selectedClass}" data-cid="${candidate.id}">
           <div class="candidate-photo">${photo}</div>
           <div class="candidate-body">
-            <h2>${escapeHtml(candidate.name)}</h2>
-            <p class="introduction">${escapeHtml(candidate.introduction || '')}</p>
             <div class="vote-meta"><span class="vote-count">${candidate.voteCount || 0} 票</span></div>
-            ${button}
+            <p class="introduction">${escapeHtml(candidate.introduction || '')}</p>
+            ${buttonHtml}
           </div>
         </article>`;
-    }).join('') + '</div>';
-
-    candidateContainer.querySelectorAll('.btn-vote').forEach((btn) => {
-      btn.addEventListener('click', () => castVote(btn.dataset.id, btn.dataset.name));
     });
+
+    if (!hasReachedLimit) {
+      html += `</div><button type="button" id="btn-submit-votes" class="btn btn-primary btn-submit-votes" disabled>
+        確認投票（${selectedIds.size} 人）
+      </button>`;
+    } else {
+      html += '</div>';
+    }
+
+    candidateContainer.innerHTML = html;
+    updateSelectCounter();
+
+    // 選取按鈕事件
+    candidateContainer.querySelectorAll('.btn-select').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.dataset.id);
+        if (selectedIds.has(id)) {
+          selectedIds.delete(id);
+        } else {
+          if (selectedIds.size >= canSelect) {
+            showAlert(`本次最多只能選 ${canSelect} 人。`, 'error');
+            return;
+          }
+          selectedIds.add(id);
+        }
+        renderCandidates();
+      });
+    });
+
+    // 確認投票按鈕事件
+    const submitBtn = document.getElementById('btn-submit-votes');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => castVotes());
+    }
   }
 
   async function loadVotePage() {
@@ -84,20 +145,17 @@
         TtriApi.getStats(employeeId)
       ]);
 
-      if (!candidateResult.success) {
-        throw new Error(candidateResult.error || '讀取候選人失敗');
-      }
-      if (!statsResult.success) {
-        throw new Error(statsResult.error || '讀取票數失敗');
-      }
+      if (!candidateResult.success) throw new Error(candidateResult.error || '讀取候選人失敗');
+      if (!statsResult.success) throw new Error(statsResult.error || '讀取票數失敗');
 
       candidates = candidateResult.candidates || [];
       stats = statsResult.stats || stats;
+      selectedIds.clear();
 
       const used = stats.voteCount || 0;
       const remaining = MAX_VOTES - used;
       connectionAlert.className = 'alert alert-success';
-      connectionAlert.innerHTML = `<strong>Google 試算表串接成功</strong> — 已載入 ${candidates.length} 位候選人，您已投 ${used} 票，剩餘 ${remaining} 票`;
+      connectionAlert.innerHTML = `<strong>載入成功</strong> — ${candidates.length} 位候選人，您已投 ${used} 票，剩餘 ${remaining} 票`;
       connectionAlert.classList.remove('hidden');
       renderCandidates();
     } catch (error) {
@@ -108,39 +166,52 @@
     }
   }
 
-  async function castVote(candidateId, candidateName) {
+  async function castVotes() {
+    if (selectedIds.size === 0) return;
     const employeeId = TtriSession.get();
-    const message = `確定要投票給「${candidateName}」嗎？\n\n投票後無法更改。`;
-    if (!confirm(message)) {
-      return;
-    }
+    const names = [...selectedIds].map(id => {
+      const c = candidates.find(c => Number(c.id) === id);
+      return c ? `候選人 #${id}` : `#${id}`;
+    });
+    if (!confirm(`確定要投票給以下 ${selectedIds.size} 人嗎？\n${names.join('\n')}\n\n投票後無法更改。`)) return;
 
-    try {
-      const result = await TtriApi.postVote({
-        employeeId: TtriEmployeeId.normalize(employeeId),
-        candidateId: Number(candidateId),
-        candidateName
-      });
+    const ids = [...selectedIds];
+    let successCount = 0;
 
-      if (!result.success) {
-        throw new Error(result.error || '投票失敗');
+    for (const candidateId of ids) {
+      const candidate = candidates.find(c => Number(c.id) === candidateId);
+      if (!candidate) continue;
+      try {
+        const result = await TtriApi.postVote({
+          employeeId: TtriEmployeeId.normalize(employeeId),
+          candidateId: Number(candidateId),
+          candidateName: candidate.name
+        });
+        if (!result.success) {
+          showAlert(`投票失敗（候選人 #${candidateId}）：${result.error}`, 'error');
+          break;
+        }
+        // 樂觀更新本地狀態
+        stats.voteCount = (stats.voteCount || 0) + 1;
+        stats.totalVotes = (stats.totalVotes || 0) + 1;
+        stats.voteCounts[candidateId] = (stats.voteCounts[candidateId] || 0) + 1;
+        const nameKey = candidate.name.toUpperCase();
+        stats.voteCountsByName[nameKey] = (stats.voteCountsByName[nameKey] || 0) + 1;
+        if (!stats.votedCandidateIds) stats.votedCandidateIds = [];
+        stats.votedCandidateIds.push(candidateId);
+        successCount++;
+      } catch (error) {
+        showAlert('投票失敗：' + error.message, 'error');
+        break;
       }
-
-      // 直接更新本地狀態，不重新打 API
-      stats.voteCount = (stats.voteCount || 0) + 1;
-      stats.totalVotes = (stats.totalVotes || 0) + 1;
-      const id = Number(candidateId);
-      stats.voteCounts[id] = (stats.voteCounts[id] || 0) + 1;
-      const nameKey = candidateName.toUpperCase();
-      stats.voteCountsByName[nameKey] = (stats.voteCountsByName[nameKey] || 0) + 1;
-
-      pageSubtitle.textContent = `職編 ${employeeId}｜目前總票數：${stats.totalVotes}`;
-      showAlert(`已成功投票給 ${candidateName}！`, 'success');
-      renderCandidates();
-    } catch (error) {
-      const msg = error.message === '已投票' ? '您已經投過票了。' : ('投票失敗：' + error.message);
-      showAlert(msg, 'error');
     }
+
+    selectedIds.clear();
+    if (successCount > 0) {
+      showAlert(`已成功投出 ${successCount} 票！`, 'success');
+      pageSubtitle.textContent = `職編 ${employeeId}｜目前總票數：${stats.totalVotes}`;
+    }
+    renderCandidates();
   }
 
   function showLogin() {
@@ -154,7 +225,7 @@
     const employeeId = TtriSession.get();
     loginSection.classList.add('hidden');
     voteSection.classList.remove('hidden');
-    navUser.textContent = employeeId + ' (' + employeeId + ')';
+    navUser.textContent = employeeId;
     navUser.classList.remove('hidden');
     btnLogout.classList.remove('hidden');
     loadVotePage();
@@ -168,8 +239,29 @@
       .replace(/"/g, '&quot;');
   }
 
-  function escapeAttr(text) {
-    return escapeHtml(text).replace(/'/g, '&#39;');
+  // 身分確認 Modal
+  function showConfirmModal(employeeId, onConfirm) {
+    const info = window.TTRI_EMPLOYEE_MAP && window.TTRI_EMPLOYEE_MAP[employeeId.toUpperCase()];
+    if (info) {
+      modalBodyText.textContent = `部門：${info.dept}　姓名：${info.name}`;
+    } else {
+      modalBodyText.textContent = `職編：${employeeId}`;
+    }
+    confirmModal.classList.remove('hidden');
+
+    const doConfirm = () => {
+      confirmModal.classList.add('hidden');
+      modalConfirm.removeEventListener('click', doConfirm);
+      modalCancel.removeEventListener('click', doCancel);
+      onConfirm();
+    };
+    const doCancel = () => {
+      confirmModal.classList.add('hidden');
+      modalConfirm.removeEventListener('click', doConfirm);
+      modalCancel.removeEventListener('click', doCancel);
+    };
+    modalConfirm.addEventListener('click', doConfirm);
+    modalCancel.addEventListener('click', doCancel);
   }
 
   document.getElementById('btn-login').addEventListener('click', () => {
@@ -185,24 +277,24 @@
       input.focus();
       return;
     }
-    TtriSession.set(input.value);
-    showVote();
+    showConfirmModal(normalized, () => {
+      TtriSession.set(input.value);
+      showVote();
+    });
   });
 
   document.getElementById('EmployeeId').addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      document.getElementById('btn-login').click();
-    }
+    if (event.key === 'Enter') document.getElementById('btn-login').click();
   });
 
   btnLogout.addEventListener('click', () => {
     TtriSession.clear();
+    selectedIds.clear();
     showLogin();
   });
 
   document.getElementById('btn-refresh').addEventListener('click', loadVotePage);
 
-  // 預熱 GAS，讓使用者輸入職編期間就完成冷啟動
   TtriApi.warmup();
 
   if (TtriSession.get()) {
