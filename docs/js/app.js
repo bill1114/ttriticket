@@ -9,8 +9,9 @@
   const pageTitle = document.getElementById('page-title');
   const pageSubtitle = document.getElementById('page-subtitle');
 
+  const MAX_VOTES = 3;
   let candidates = [];
-  let stats = { totalVotes: 0, voteCounts: {}, voteCountsByName: {}, hasVoted: false };
+  let stats = { totalVotes: 0, voteCounts: {}, voteCountsByName: {}, voteCount: 0 };
 
   function showAlert(message, type) {
     alertBox.className = 'alert alert-' + type;
@@ -36,7 +37,8 @@
 
   function renderCandidates() {
     const employeeId = TtriSession.get();
-    const hasVoted = stats.hasVoted;
+    const hasVoted = (stats.voteCount || 0) >= MAX_VOTES;
+    const remaining = MAX_VOTES - (stats.voteCount || 0);
     const sorted = applyVoteCounts([...candidates], stats);
 
     if (!sorted.length) {
@@ -50,8 +52,8 @@
         : '<div class="photo-placeholder">無照片</div>';
 
       const button = hasVoted
-        ? '<button type="button" class="btn btn-disabled" disabled>已投票</button>'
-        : `<button type="button" class="btn btn-primary btn-vote" data-id="${candidate.id}" data-name="${escapeAttr(candidate.name)}">投票</button>`;
+        ? '<button type="button" class="btn btn-disabled" disabled>已達投票上限</button>'
+        : `<button type="button" class="btn btn-primary btn-vote" data-id="${candidate.id}" data-name="${escapeAttr(candidate.name)}">投票（剩餘 ${remaining} 票）</button>`;
 
       return `
         <article class="candidate-card">
@@ -92,8 +94,10 @@
       candidates = candidateResult.candidates || [];
       stats = statsResult.stats || stats;
 
+      const used = stats.voteCount || 0;
+      const remaining = MAX_VOTES - used;
       connectionAlert.className = 'alert alert-success';
-      connectionAlert.innerHTML = `<strong>Google 試算表串接成功</strong> — 已載入 ${candidates.length} 位候選人`;
+      connectionAlert.innerHTML = `<strong>Google 試算表串接成功</strong> — 已載入 ${candidates.length} 位候選人，您已投 ${used} 票，剩餘 ${remaining} 票`;
       connectionAlert.classList.remove('hidden');
       renderCandidates();
     } catch (error) {
@@ -123,7 +127,7 @@
       }
 
       // 直接更新本地狀態，不重新打 API
-      stats.hasVoted = true;
+      stats.voteCount = (stats.voteCount || 0) + 1;
       stats.totalVotes = (stats.totalVotes || 0) + 1;
       const id = Number(candidateId);
       stats.voteCounts[id] = (stats.voteCounts[id] || 0) + 1;
@@ -172,6 +176,12 @@
     const input = document.getElementById('EmployeeId');
     if (!input.value.trim()) {
       alert('請輸入職編後再開始投票。');
+      input.focus();
+      return;
+    }
+    const normalized = TtriEmployeeId.normalize(input.value);
+    if (window.TTRI_EMPLOYEES && !window.TTRI_EMPLOYEES.has(normalized.toUpperCase())) {
+      showAlert('此職編不在職工名單中，無法投票。', 'error');
       input.focus();
       return;
     }

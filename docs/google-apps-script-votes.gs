@@ -60,14 +60,19 @@ function doPost(e) {
 
     sheet.getRange('B:B').setNumberFormat('@');
 
+    var MAX_VOTES = 3;
     var lastRow = sheet.getLastRow();
     if (lastRow >= 2) {
       var employeeIds = sheet.getRange('B2:B' + lastRow).getDisplayValues();
+      var voteCount = 0;
       for (var i = 0; i < employeeIds.length; i++) {
         var existingId = String(employeeIds[i][0]).trim();
         if (employeeIdsEqual(existingId, employeeId)) {
-          return respond_({ success: false, error: '已投票' }, e);
+          voteCount++;
         }
+      }
+      if (voteCount >= MAX_VOTES) {
+        return respond_({ success: false, error: '已達投票上限（最多 ' + MAX_VOTES + ' 票）' }, e);
       }
     }
 
@@ -123,7 +128,7 @@ function getVoteStats_(employeeId) {
   var voteCounts = {};
   var voteCountsByName = {};
   var totalVotes = 0;
-  var hasVoted = false;
+  var myVoteCount = 0;
   var normalizedEmployeeId = normalizeEmployeeId_(employeeId);
 
   if (lastRow < 2) {
@@ -131,7 +136,7 @@ function getVoteStats_(employeeId) {
       totalVotes: 0,
       voteCounts: voteCounts,
       voteCountsByName: voteCountsByName,
-      hasVoted: false
+      voteCount: 0
     };
   }
 
@@ -154,7 +159,7 @@ function getVoteStats_(employeeId) {
       voteCountsByName[nameKey] = (voteCountsByName[nameKey] || 0) + 1;
     }
     if (normalizedEmployeeId && employeeIdsEqual(rowEmployeeId, normalizedEmployeeId)) {
-      hasVoted = true;
+      myVoteCount++;
     }
   }
 
@@ -162,7 +167,7 @@ function getVoteStats_(employeeId) {
     totalVotes: totalVotes,
     voteCounts: voteCounts,
     voteCountsByName: voteCountsByName,
-    hasVoted: hasVoted
+    voteCount: myVoteCount
   };
 }
 
