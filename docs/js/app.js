@@ -138,7 +138,7 @@
     hideAlert();
     const employeeId = TtriSession.get();
     pageTitle.textContent = window.TTRI_CONFIG.title || '投票系統';
-    pageSubtitle.textContent = `職編 ${employeeId}｜目前總票數：${stats.totalVotes}`;
+    pageSubtitle.textContent = `職編 ${employeeId}`;
 
     try {
       const [candidateResult, statsResult] = await Promise.all([
@@ -210,7 +210,7 @@
     selectedIds.clear();
     if (successCount > 0) {
       showAlert(`已成功投出 ${successCount} 票！`, 'success');
-      pageSubtitle.textContent = `職編 ${employeeId}｜目前總票數：${stats.totalVotes}`;
+      pageSubtitle.textContent = `職編 ${employeeId}`;
     }
     renderCandidates();
   }
