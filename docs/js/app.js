@@ -91,6 +91,7 @@
         <article class="candidate-card${selectedClass}" data-cid="${candidate.id}">
           <div class="candidate-photo">${photo}</div>
           <div class="candidate-body">
+            <h2 class="candidate-label">候選人 ${candidate.id}</h2>
             <div class="vote-meta"><span class="vote-count">${candidate.voteCount || 0} 票</span></div>
             <p class="introduction">${escapeHtml(candidate.introduction || '')}</p>
             ${buttonHtml}

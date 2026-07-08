@@ -54,8 +54,9 @@
         const barWidth = maxVotes > 0
           ? (candidate.voteCount / maxVotes * 100).toFixed(1)
           : '0.0';
+        const label = '候選人 ' + candidate.id;
         const photo = candidate.photoUrl
-          ? `<img src="${escapeHtml(candidate.photoUrl)}" alt="${escapeHtml(candidate.name)}" loading="lazy" onerror="this.onerror=null;this.src='images/photo-unavailable.svg';" />`
+          ? `<img src="${escapeHtml(candidate.photoUrl)}" alt="${label}" loading="lazy" onerror="this.onerror=null;this.src='images/photo-unavailable.svg';" />`
           : '';
 
         return `
@@ -64,7 +65,7 @@
             <div class="result-photo">${photo}</div>
             <div class="result-info">
               <div class="result-header">
-                <h2>${escapeHtml(candidate.name)}</h2>
+                <h2>${label}</h2>
                 <span class="result-votes">${candidate.voteCount} 票 (${percentage}%)</span>
               </div>
               <div class="progress-bar"><div class="progress-fill" style="width:${barWidth}%"></div></div>
