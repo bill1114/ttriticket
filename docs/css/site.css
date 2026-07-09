@@ -92,11 +92,12 @@ nav a:hover { color: var(--primary); }
 }
 
 .candidate-photo {
-    aspect-ratio: 1;
+    height: 260px;
     background: #eef2ff;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
 .candidate-photo img { width: 100%; height: 100%; object-fit: cover; }
