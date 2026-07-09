@@ -92,15 +92,13 @@ nav a:hover { color: var(--primary); }
 }
 
 .candidate-photo {
-    height: 260px;
-    background: #eef2ff;
+    background: #f8faff;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
 }
 
-.candidate-photo img { width: 100%; height: 100%; object-fit: contain; background: #f8faff; }
+.candidate-photo img { width: 100%; height: auto; display: block; object-fit: unset; }
 .photo-placeholder { color: var(--muted); font-size: 0.95rem; }
 
 .candidate-body {
