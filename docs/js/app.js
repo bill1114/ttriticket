@@ -77,7 +77,11 @@
 
       let buttonHtml;
       if (hasReachedLimit) {
-        buttonHtml = '<button type="button" class="btn btn-disabled" disabled>已達投票上限</button>';
+        if (alreadyVotedThis) {
+          buttonHtml = '<button type="button" class="btn btn-voted-this" disabled>✓ 我已投過此人</button>';
+        } else {
+          buttonHtml = '<button type="button" class="btn btn-disabled" disabled>已達投票上限</button>';
+        }
       } else if (alreadyVotedThis) {
         buttonHtml = '<button type="button" class="btn btn-voted-this" disabled>已投過此人</button>';
       } else {
@@ -212,12 +216,12 @@
     }
 
     selectedIds.clear();
+    hideAlert();
     if (successCount > 0) {
-      showAlert(`已成功投出 ${successCount} 票！`, 'success');
       const used = stats.voteCount || 0;
       const rem = MAX_VOTES - used;
       connectionAlert.className = 'alert alert-success';
-      connectionAlert.innerHTML = `<strong>載入成功</strong> — ${candidates.length} 位候選人，您已投 ${used} 票，剩餘 ${rem} 票`;
+      connectionAlert.innerHTML = `<strong>已成功投出 ${successCount} 票！</strong> — ${candidates.length} 位候選人，您已投 ${used} 票，剩餘 ${rem} 票`;
       connectionAlert.classList.remove('hidden');
     }
     renderCandidates();

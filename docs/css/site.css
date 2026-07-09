@@ -110,7 +110,7 @@ nav a:hover { color: var(--primary); }
 }
 
 .candidate-body h2 { margin: 0 0 0.5rem; font-size: 1.25rem; }
-.introduction { color: var(--muted); margin: 0 0 1rem; flex: 1; }
+.introduction { color: var(--muted); margin: 0 0 1rem; flex: 1; min-height: 3em; }
 .vote-meta { margin-bottom: 1rem; }
 
 .vote-count {
