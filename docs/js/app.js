@@ -55,7 +55,8 @@
     const hasReachedLimit = (stats.voteCount || 0) >= MAX_VOTES;
     const remaining = MAX_VOTES - (stats.voteCount || 0);
     const votedIds = new Set((stats.votedCandidateIds || []).map(Number));
-    const sorted = applyVoteCounts([...candidates], stats);
+    // 投票頁固定依候選人編號排列，不依票數
+    const sorted = applyVoteCounts([...candidates], stats).sort((a, b) => a.id - b.id);
 
     if (!sorted.length) {
       candidateContainer.innerHTML = '<div class="empty-state"><p>目前尚無候選人資料。</p></div>';
@@ -213,6 +214,11 @@
     selectedIds.clear();
     if (successCount > 0) {
       showAlert(`已成功投出 ${successCount} 票！`, 'success');
+      const used = stats.voteCount || 0;
+      const rem = MAX_VOTES - used;
+      connectionAlert.className = 'alert alert-success';
+      connectionAlert.innerHTML = `<strong>載入成功</strong> — ${candidates.length} 位候選人，您已投 ${used} 票，剩餘 ${rem} 票`;
+      connectionAlert.classList.remove('hidden');
     }
     renderCandidates();
   }
