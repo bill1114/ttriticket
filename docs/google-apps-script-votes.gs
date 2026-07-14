@@ -7,6 +7,56 @@
 var SPREADSHEET_ID = '1AQGEom8myrDYbQBCJPAYIvx9DdkEnFBgtkAmbR0rdpQ';
 var CANDIDATES_GID = 736958374;
 var VOTE_SHEET_NAME = '投票紀錄';
+var CHANGE_LOG_SHEET_NAME = '變更紀錄';
+
+/**
+ * 安裝式觸發器：手動修改試算表時自動記錄變更
+ * 需在「觸發條件」頁面設定：事件來源=試算表、事件類型=編輯中
+ */
+function onEditTrigger(e) {
+  try {
+    var range = e.range;
+    var sheet = range.getSheet();
+    var sheetName = sheet.getName();
+
+    // 只記錄投票紀錄與表單回覆相關工作表的變更
+    var watchedSheets = [VOTE_SHEET_NAME, '表單回覆 1', '表單回覆'];
+    var isWatched = watchedSheets.some(function(name) {
+      return sheetName === name || sheetName.indexOf('表單回覆') === 0;
+    });
+    if (!isWatched) return;
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var logSheet = ss.getSheetByName(CHANGE_LOG_SHEET_NAME);
+    if (!logSheet) {
+      logSheet = ss.insertSheet(CHANGE_LOG_SHEET_NAME);
+      logSheet.appendRow(['時間', '編輯者', '工作表', '儲存格', '修改前', '修改後', '備註']);
+      logSheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+      logSheet.setFrozenRows(1);
+    }
+
+    var editor = '';
+    try { editor = Session.getActiveUser().getEmail(); } catch (_) {}
+
+    var oldValue = (e.oldValue !== undefined && e.oldValue !== null) ? String(e.oldValue) : '（空白）';
+    var newValue = range.getValue();
+    newValue = (newValue !== null && newValue !== '') ? String(newValue) : '（空白）';
+
+    var note = sheetName === VOTE_SHEET_NAME ? '投票紀錄手動修改' : '表單回覆手動修改';
+
+    logSheet.appendRow([
+      new Date(),
+      editor,
+      sheetName,
+      range.getA1Notation(),
+      oldValue,
+      newValue,
+      note
+    ]);
+  } catch (err) {
+    // 靜默失敗，不影響使用者操作
+  }
+}
 
 var NAME_COLUMN_KEY = '姓名/職編';
 var INTRO_COLUMN_KEY = '請以20字內短文';
