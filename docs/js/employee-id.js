@@ -10,7 +10,8 @@ window.TtriEmployeeId = {
     if (!trimmed) return '';
 
     if (/[A-Za-z]/.test(trimmed)) {
-      return trimmed;
+      // 去掉數字部分的前導零，例如 C0010 → C10、D0596 → D596
+      return trimmed.replace(/^([A-Za-z]+)(0+)(\d+)$/, '$1$3');
     }
 
     const number = Number(trimmed);
