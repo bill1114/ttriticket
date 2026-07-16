@@ -278,6 +278,10 @@
   }
 
   document.getElementById('btn-login').addEventListener('click', () => {
+    if (window.TTRI_CONFIG && window.TTRI_CONFIG.votingOpen === false) {
+      showAlert(window.TTRI_CONFIG.votingClosedMessage || '投票尚未開放。', 'warning');
+      return;
+    }
     const input = document.getElementById('EmployeeId');
     if (!input.value.trim()) {
       alert('請輸入職編後再開始投票。');
@@ -310,7 +314,7 @@
 
   TtriApi.warmup();
 
-  if (TtriSession.get()) {
+  if (TtriSession.get() && window.TTRI_CONFIG && window.TTRI_CONFIG.votingOpen !== false) {
     showVote();
   } else {
     showLogin();
