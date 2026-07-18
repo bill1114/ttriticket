@@ -143,7 +143,8 @@
     hideAlert();
     const employeeId = TtriSession.get();
     pageTitle.textContent = window.TTRI_CONFIG.title || '投票系統';
-    const empInfo = window.TTRI_EMPLOYEE_MAP && window.TTRI_EMPLOYEE_MAP[employeeId.toUpperCase()];
+    const normalizedId = TtriEmployeeId.normalize(employeeId).toUpperCase();
+    const empInfo = window.TTRI_EMPLOYEE_MAP && (window.TTRI_EMPLOYEE_MAP[normalizedId] || window.TTRI_EMPLOYEE_MAP[employeeId.toUpperCase()]);
     pageSubtitle.textContent = empInfo
       ? `${empInfo.dept}／${empInfo.name}（${employeeId}）`
       : `職編 ${employeeId}`;
@@ -254,7 +255,8 @@
 
   // 身分確認 Modal
   function showConfirmModal(employeeId, onConfirm) {
-    const info = window.TTRI_EMPLOYEE_MAP && window.TTRI_EMPLOYEE_MAP[employeeId.toUpperCase()];
+    const nid = TtriEmployeeId.normalize(employeeId).toUpperCase();
+    const info = window.TTRI_EMPLOYEE_MAP && (window.TTRI_EMPLOYEE_MAP[nid] || window.TTRI_EMPLOYEE_MAP[employeeId.toUpperCase()]);
     if (info) {
       modalBodyText.textContent = `部門：${info.dept}　姓名：${info.name}`;
     } else {
