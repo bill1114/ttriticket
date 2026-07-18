@@ -34,7 +34,7 @@ window.TtriSession = {
   },
 
   set(employeeId) {
-    sessionStorage.setItem(this.key, TtriEmployeeId.normalize(employeeId));
+    sessionStorage.setItem(this.key, String(employeeId).trim());
   },
 
   clear() {
